@@ -26,9 +26,7 @@ gulp.task('browser-sync', () => {
 });
 
 gulp.task('watch', ['browser-sync'], () => {
-  gulp.watch('src/css/*.css');
-  gulp.watch('src/js/*.js');
-  gulp.watch('src/*.html');
+  gulp.watch(['src/css/*.css', 'src/js/*.js', 'src/*.html'], ['copyFiles']);
 });
 
 gulp.task('compress', () =>
