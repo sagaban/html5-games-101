@@ -10,11 +10,20 @@ function Ship(game, x, y) {
 
   this.anchor.setTo(0.5); // handle the sprite by its center
   this.game.physics.arcade.enable(this); // enable physics
-  this.body.velocity.x = 100;
 }
 // inherit from Phaser.Sprite
 Ship.prototype = Object.create(Phaser.Sprite.prototype);
 Ship.prototype.constructor = Ship;
+
+Ship.prototype.move = function(dir) {
+  const SPEED = 400;
+  this.body.velocity.x = SPEED * dir;
+};
+
+Ship.prototype.shoot = function() {
+  // TODO: implement
+  console.log('Payun!');
+};
 
 /*************************************************
  *Play game state
@@ -34,6 +43,27 @@ PlayState.create = function() {
   // since we are instantiating the sprite and not using the factory method,
   // we need to manually add it to the game world
   this.game.add.existing(this.ship);
+
+  // register keys
+  this.keys = this.game.input.keyboard.addKeys({
+    left: Phaser.KeyCode.LEFT,
+    right: Phaser.KeyCode.RIGHT,
+    space: Phaser.KeyCode.SPACEBAR
+  });
+// subscribe to keyboard events
+  this.keys.space.onDown.add(function() {
+    this.ship.shoot();
+  }, this);
+};
+
+PlayState.update = function() {
+  if (this.keys.left.isDown) { // move left
+    this.ship.move(-1);
+  } else if (this.keys.right.isDown) { // move right
+    this.ship.move(1);
+  } else { // stop
+    this.ship.move(0);
+  }
 };
 
 window.onload = function() {
