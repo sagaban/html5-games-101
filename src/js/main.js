@@ -82,11 +82,51 @@ function Alien(game, x, y) {
 
   this.animations.add('fly', [0, 1]); // add animation from sprite sheet
   this.animations.play('fly', 2, true); // play at 2fps, looped
+
+  this.reset(x, y);
 }
 
 // inherit from Phaser.Sprite
 Alien.prototype = Object.create(Phaser.Sprite.prototype);
 Alien.prototype.constructor = Alien;
+
+// Creates a new bullet object, using sprite pooling
+// NOTE: since all of these spawner functions are very similar, we could
+//       do some DRY and code a curried spawner method. See:
+//       https://www.sitepoint.com/currying-in-functional-javascript/
+Alien.spawn = function(group, x, y) {
+  let alien = group.getFirstExists(false);
+  // no free slot found, we need to create a new sprite
+  if (alien === null) {
+    alien = new Alien(group.game, x, y);
+    group.add(alien);
+  }
+  // free slot found! we just need to reset the sprite to the initial position
+  else {
+    alien.reset(x, y);
+  }
+
+  return alien;
+};
+
+Alien.prototype.reset = function(x, y) {
+  // call Phaser.Sprite reset
+  Phaser.Sprite.prototype.reset.call(this, x, y);
+
+  // set random horizontal and vertical speed for the alien
+  const MIN_SPEEDY = 100;
+  const MAX_SPEEDY = 400;
+  const MAX_SPEEDX = 100;
+  this.body.velocity.y = this.game.rnd.between(MIN_SPEEDY, MAX_SPEEDY);
+  this.body.velocity.x = this.game.rnd.between(-MAX_SPEEDX, MAX_SPEEDX);
+};
+
+Alien.prototype.update = function() {
+  // kill the alien when they go off screen
+  if (this.y > this.game.world.height + this.height) {
+    this.kill(); // this sets its alive and exists properties to false
+  }
+};
 
 /*************************************************
  *Play game state
@@ -112,9 +152,8 @@ PlayState.create = function() {
   this.game.add.existing(this.ship);
   // create a group to manage bullets
   this.bullets = this.game.add.group();
-
-  // add sample alien
-  this.game.add.existing(new Alien(this.game, 50, 50));
+  // create a group to manage enemy aliens
+  this.aliens = this.game.add.group();
 
   // register keys
   this.keys = this.game.input.keyboard.addKeys({
@@ -135,6 +174,12 @@ PlayState.update = function() {
     this.ship.move(1);
   } else { // stop
     this.ship.move(0);
+  }
+
+  // randomly spawn new aliens (10% chance every frame)
+  if (this.game.rnd.between(0, 100) < 10) {
+    let x = this.game.rnd.between(0, this.game.world.width); // random x
+    Alien.spawn(this.aliens, x, -50);
   }
 };
 
