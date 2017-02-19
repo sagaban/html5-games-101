@@ -34,21 +34,41 @@ function Bullet(game, x, y) {
   Phaser.Sprite.call(this, game, x, y, 'bullet');
 
   this.anchor.setTo(0.5, 1); // handle from the bottom
-
-    // set up physics
-  const SPEED = 400;
+  // set up physics
   this.game.physics.arcade.enable(this);
-  this.body.velocity.y = -SPEED;
+
+  this.reset(x, y);
 }
 
 // inherit from Phaser.Sprite
 Bullet.prototype = Object.create(Phaser.Sprite.prototype);
 Bullet.prototype.constructor = Bullet;
 
+Bullet.prototype.reset = function(x, y) {
+  // call parent method
+  Phaser.Sprite.prototype.reset.call(this, x, y);
+
+  this.body.velocity.y = -400;
+};
+
 Bullet.prototype.update = function() {
   // kill bullet when out of the screen
   if (this.y < 0) {
-    this.destroy();
+    this.kill();
+  }
+};
+
+// Creates a new bullet object, using sprite pooling
+Bullet.spawn = function(group, x, y) {
+  let bullet = group.getFirstExists(false);
+  // no free slot found, we need to create a new sprite
+  if (bullet === null) {
+    bullet = new Bullet(group.game, x, y);
+    group.add(bullet);
+  }
+  // free slot found! we just need to reset the sprite to the initial position
+  else {
+    bullet.reset(x, y);
   }
 };
 
@@ -73,6 +93,8 @@ PlayState.create = function() {
   // since we are instantiating the sprite and not using the factory method,
   // we need to manually add it to the game world
   this.game.add.existing(this.ship);
+  // create a group to manage bullets
+  this.bullets = this.game.add.group();
 
   // register keys
   this.keys = this.game.input.keyboard.addKeys({
@@ -82,7 +104,7 @@ PlayState.create = function() {
   });
 // subscribe to keyboard events
   this.keys.space.onDown.add(function() {
-    this.ship.shoot();
+    this.ship.shoot(this.bullets);
   }, this);
 };
 
