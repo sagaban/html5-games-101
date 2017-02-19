@@ -72,6 +72,22 @@ Bullet.spawn = function(group, x, y) {
   }
 };
 
+// ///////////// ALIENS ////////////////
+function Alien(game, x, y) {
+    // call Phaser.Sprite parent constructor
+  Phaser.Sprite.call(this, game, x, y, 'alien');
+
+  this.anchor.setTo(0.5); // handle sprite from its center
+  this.game.physics.enable(this); // enable physics
+
+  this.animations.add('fly', [0, 1]); // add animation from sprite sheet
+  this.animations.play('fly', 2, true); // play at 2fps, looped
+}
+
+// inherit from Phaser.Sprite
+Alien.prototype = Object.create(Phaser.Sprite.prototype);
+Alien.prototype.constructor = Alien;
+
 /*************************************************
  *Play game state
  ************************************************/
@@ -82,6 +98,7 @@ PlayState.preload = function() {
   this.game.load.image('background', 'images/background.png');
   this.game.load.image('ship', 'images/ship.png');
   this.game.load.image('bullet', 'images/bullet.png');
+  this.game.load.spritesheet('alien', 'images/alien.png', 40, 44);
 };
 
 PlayState.create = function() {
@@ -95,6 +112,9 @@ PlayState.create = function() {
   this.game.add.existing(this.ship);
   // create a group to manage bullets
   this.bullets = this.game.add.group();
+
+  // add sample alien
+  this.game.add.existing(new Alien(this.game, 50, 50));
 
   // register keys
   this.keys = this.game.input.keyboard.addKeys({
